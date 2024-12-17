@@ -1,0 +1,44 @@
+name: CI/CD Pipeline for Snowflake Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/*create_new_table.sql'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the GitHub repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Python and install Snowflake CLI (snowsql)
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install Snowflake CLI and Schemachange
+      run: |
+        echo "Step 1: Installing schemachange"
+        pip install schemachange --upgrade
+
+    # Step 3: Run schema changes with schemachange
+    - name: Run schema changes with schemachange
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+        SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      run: |
+        echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+        echo "Step 2: Running schemachange"
+        schemachange -f $GITHUB_WORKSPACE/deploy/migrations -a $SNOWFLAKE_ACCOUNT -u $SNOWFLAKE_USER -r $SNOWFLAKE_ROLE -w $SNOWFLAKE_WAREHOUSE -d $SNOWFLAKE_DATABASE -c $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table
