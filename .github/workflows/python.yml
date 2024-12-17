@@ -28,12 +28,13 @@ jobs:
       - name: Run schemachange
         env:
           SF_ACCOUNT: ${{ secrets.Snowflake_ACCOUNT }}
-          SF_USERNAME: ${{ secrets.Snowflake_USERNAME }}
+          SF_USERNAME: ${{ secrets.Snowflake_USER }}
           SF_ROLE: ${{ secrets.Snowflake_ROLE }}
           SF_WAREHOUSE: ${{ secrets.Snowflake_WH }}
           SF_DATABASE: ${{ secrets.Snowflake_DATABASE }}
           SF_SCHEMA: ${{ secrets.Snowflake_SCHEMA}}
           SNOWFLAKE_PASSWORD: ${{ secrets.Snowflake_PASSWORD }}
+          
         run: |
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
           python --version
