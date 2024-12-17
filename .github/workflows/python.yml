@@ -1,90 +1,90 @@
-name: CI/CD Python Pipeline for Snowflake Deployment
+# name: CI/CD Python Pipeline for Snowflake Deployment
 
-on:
-  workflow_dispatch: # This allows manual triggering of the workflow
-    inputs:
-      deploy_files:
-        description: 'Files to deploy (comma-separated list)'
-        required: true
-        default: 'deploy/*create_schema.sql'
+# on:
+#   workflow_dispatch: # This allows manual triggering of the workflow
+#     inputs:
+#       deploy_files:
+#         description: 'Files to deploy (comma-separated list)'
+#         required: true
+#         default: 'deploy/*create_schema.sql'
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
 
-    steps:
+#     steps:
     
-    # Step 1: Checkout the GitHub repository
-    - name: Checkout repository
-      uses: actions/checkout@v2
+#     # Step 1: Checkout the GitHub repository
+#     - name: Checkout repository
+#       uses: actions/checkout@v2
 
-    # Step 2: Set up Python and install Snowflake Connector
-    - name: Set up Python and install Snowflake Connector
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
+#     # Step 2: Set up Python and install Snowflake Connector
+#     - name: Set up Python and install Snowflake Connector
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: '3.8'
 
-    - name: Install Snowflake Connector
-      run: |
-        python -m pip install --upgrade pip
-        pip install snowflake-connector-python
+#     - name: Install Snowflake Connector
+#       run: |
+#         python -m pip install --upgrade pip
+#         pip install snowflake-connector-python
 
-    # Step 3: Set up Snowflake credentials using GitHub Secrets
-    - name: Set up Snowflake credentials
-      env:
-        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-        SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-        SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-        SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
-        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-        SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      run: |
-        # Ensure the directory exists
-        mkdir -p ~/.snowsql
+#     # Step 3: Set up Snowflake credentials using GitHub Secrets
+#     - name: Set up Snowflake credentials
+#       env:
+#         SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+#         SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+#         SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+#         SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+#         SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+#         SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+#         SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+#       run: |
+#         # Ensure the directory exists
+#         mkdir -p ~/.snowsql
 
-        # Write Snowflake configuration
-        echo "[connections]" > ~/.snowsql/config
-        echo "accountname = $SNOWFLAKE_ACCOUNT" >> ~/.snowsql/config
-        echo "username = $SNOWFLAKE_USER" >> ~/.snowsql/config
-        echo "password = $SNOWFLAKE_PASSWORD" >> ~/.snowsql/config
-        echo "database = $SNOWFLAKE_DATABASE" >> ~/.snowsql/config
-        echo "schema = $SNOWFLAKE_SCHEMA" >> ~/.snowsql/config
-        echo "warehouse = $SNOWFLAKE_WAREHOUSE" >> ~/.snowsql/config
-        echo "role = $SNOWFLAKE_ROLE" >> ~/.snowsql/config
+#         # Write Snowflake configuration
+#         echo "[connections]" > ~/.snowsql/config
+#         echo "accountname = $SNOWFLAKE_ACCOUNT" >> ~/.snowsql/config
+#         echo "username = $SNOWFLAKE_USER" >> ~/.snowsql/config
+#         echo "password = $SNOWFLAKE_PASSWORD" >> ~/.snowsql/config
+#         echo "database = $SNOWFLAKE_DATABASE" >> ~/.snowsql/config
+#         echo "schema = $SNOWFLAKE_SCHEMA" >> ~/.snowsql/config
+#         echo "warehouse = $SNOWFLAKE_WAREHOUSE" >> ~/.snowsql/config
+#         echo "role = $SNOWFLAKE_ROLE" >> ~/.snowsql/config
 
-    # Step 4: Run Snowflake SQL scripts with Python
-    - name: Run Snowflake SQL scripts with Python
-      run: |
-        python -c "
-import snowflake.connector
-import os
+#     # Step 4: Run Snowflake SQL scripts with Python
+#     - name: Run Snowflake SQL scripts with Python
+#       run: |
+#         python -c "
+# import snowflake.connector
+# import os
 
-# Set Snowflake connection parameters
-conn = snowflake.connector.connect(
-    user=os.getenv('SNOWFLAKE_USER'),
-    password=os.getenv('SNOWFLAKE_PASSWORD'),
-    account=os.getenv('SNOWFLAKE_ACCOUNT'),
-    warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
-    database=os.getenv('SNOWFLAKE_DATABASE'),
-    schema=os.getenv('SNOWFLAKE_SCHEMA'),
-    role=os.getenv('SNOWFLAKE_ROLE')
-)
+# # Set Snowflake connection parameters
+# conn = snowflake.connector.connect(
+#     user=os.getenv('SNOWFLAKE_USER'),
+#     password=os.getenv('SNOWFLAKE_PASSWORD'),
+#     account=os.getenv('SNOWFLAKE_ACCOUNT'),
+#     warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+#     database=os.getenv('SNOWFLAKE_DATABASE'),
+#     schema=os.getenv('SNOWFLAKE_SCHEMA'),
+#     role=os.getenv('SNOWFLAKE_ROLE')
+# )
 
-# Get deploy files from input and execute each SQL file
-deploy_files = '${{ github.event.inputs.deploy_files }}'.split(',')
-for file_pattern in deploy_files:
-    for file in os.listdir('./deploy'):
-        if file.endswith(file_pattern):
-            with open(f'./deploy/{file}', 'r') as f:
-                sql = f.read()
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                cursor.close()
-conn.close()
-        "
+# # Get deploy files from input and execute each SQL file
+# deploy_files = '${{ github.event.inputs.deploy_files }}'.split(',')
+# for file_pattern in deploy_files:
+#     for file in os.listdir('./deploy'):
+#         if file.endswith(file_pattern):
+#             with open(f'./deploy/{file}', 'r') as f:
+#                 sql = f.read()
+#                 cursor = conn.cursor()
+#                 cursor.execute(sql)
+#                 cursor.close()
+# conn.close()
+#         "
 
-    # Step 5: Notify deployment status
-    - name: Notify deployment status
-      if: success()
-      run: echo "Snowflake deployment successful!"
+#     # Step 5: Notify deployment status
+#     - name: Notify deployment status
+#       if: success()
+#       run: echo "Snowflake deployment successful!"
