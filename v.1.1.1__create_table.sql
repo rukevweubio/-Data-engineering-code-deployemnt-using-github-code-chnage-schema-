@@ -1,4 +1,12 @@
 -- Step 1: Create the table
+--- use database swaggy_database;
+use database swaggy_database;
+
+--- create database swaggy_database
+create  or replace schema snowflake_ci_cd;
+-- uswd the schema 
+use schema snowflake_ci_cd;
+
 CREATE OR REPLACE TABLE snowflake_ci_cd (
     id INTEGER AUTOINCREMENT PRIMARY KEY,
     name STRING,
