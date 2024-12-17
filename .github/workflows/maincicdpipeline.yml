@@ -40,5 +40,8 @@ jobs:
         SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       run: |
         echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+        echo "Working directory contents:"
+        ls -alh $GITHUB_WORKSPACE
         echo "Step 2: Running schemachange"
-        schemachange -f $GITHUB_WORKSPACE/deploy/migrations -a $SNOWFLAKE_ACCOUNT -u $SNOWFLAKE_USER -r $SNOWFLAKE_ROLE -w $SNOWFLAKE_WAREHOUSE -d $SNOWFLAKE_DATABASE -c $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table
+        # Update the path to the correct directory for migration scripts
+        schemachange -f ${GITHUB_WORKSPACE%/}/deploy -a $SNOWFLAKE_ACCOUNT -u $SNOWFLAKE_USER -r $SNOWFLAKE_ROLE -w $SNOWFLAKE_WAREHOUSE -d $SNOWFLAKE_DATABASE -c $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table
