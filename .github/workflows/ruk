@@ -1,0 +1,70 @@
+name: CI/CD Pipeline for Snowflake Deployment
+
+on:
+  push:
+    branches:
+      - dev 
+    paths:
+      - deploy/**
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    # Step 1: Checkout the GitHub repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Python and install Snowflake CLI (snowsql)
+    - name: Set up Python and install Snowflake CLI
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install Snowflake CLI (snowsql)
+      run: |
+        curl -o /tmp/snowsql.tar.gz https://s3.amazonaws.com/snowsql-ci-artifacts/snowsql-linux-latest.tar.gz
+        tar -xvf /tmp/snowsql.tar.gz -C /tmp
+        sudo mv /tmp/snowsql /usr/local/bin
+        snowsql --version  # Verify snowsql installation
+
+    # Step 3: Set up Snowflake credentials using GitHub Secrets
+    - name: Set up Snowflake credentials
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+        SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      run: |
+        echo "[connections]" > ~/.snowsql/config
+        echo "accountname = $SNOWFLAKE_ACCOUNT" >> ~/.snowsql/config
+        echo "username = $SNOWFLAKE_USER" >> ~/.snowsql/config
+        echo "password = $SNOWFLAKE_PASSWORD" >> ~/.snowsql/config
+        echo "database = $SNOWFLAKE_DATABASE" >> ~/.snowsql/config
+        echo "schema = $SNOWFLAKE_SCHEMA" >> ~/.snowsql/config
+        echo "warehouse = $SNOWFLAKE_WAREHOUSE" >> ~/.snowsql/config
+        echo "role = $SNOWFLAKE_ROLE" >> ~/.snowsql/config
+
+    # Step 4: Run Snowflake SQL scripts from the repository
+    - name: Run Snowflake SQL scripts
+      run: |
+        # Loop through the SQL files in the repository directory and run them
+        for file in ./deploy/*.sql; do
+          echo "Running $file on Snowflake..."
+          snowsql -f $file
+        done
+
+    # Step 5: Post Deployment - Optional: Notify or alert via Slack, email, etc.
+    - name: Notify deployment status
+      if: success()
+      run: echo "Snowflake deployment successful!"
+      # Optionally: Add Slack or Email notification logic here
+
