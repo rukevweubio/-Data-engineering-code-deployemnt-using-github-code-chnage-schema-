@@ -5,8 +5,7 @@ on:
     branches:
       - dev 
     paths:
-    - deploy/**
-    
+      - 'deploy/**'
   pull_request:
     branches:
       - main
@@ -14,6 +13,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
     
     # Step 1: Checkout the GitHub repository
@@ -25,25 +25,23 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
-    - name: Install Snowflake CLI (snowsql)
-      
 
-    # Step 3: Set up Snowflake credentials using GitHub Secrets
     - name: Set up Snowflake credentials
-      env: |
-         snowflake_account:${{secrets.smowflake_account}}
-       snowflake_user: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-       snowflake_database: ${{ secrets.SNOWFLAKE_USERNAME }}" 
-       snowflake_schema: ${{ secrets.SNOWFLAKE_PASSWORD }}
-        snowflake_wh: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-        snowflakepassword: ${{ secrets.SNOWFLAKE_DATABASE }}
-      = ${{ secrets.SNOWFLAKE_SCHEMA }}
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+        SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+ 
 
     # Step 4: Run Snowflake SQL scripts from the repository
     - name: Run Snowflake SQL scripts
       run: |
         # Loop through the SQL files in the repository directory and run them
-        for file in ./snowflake_scripts/*.sql; do
+        for file in ./deploy/*.sql; do
           echo "Running $file on Snowflake..."
           snowsql -f $file
         done
@@ -53,3 +51,4 @@ jobs:
       if: success()
       run: echo "Snowflake deployment successful!"
       # Optionally: Add Slack or Email notification logic here
+
