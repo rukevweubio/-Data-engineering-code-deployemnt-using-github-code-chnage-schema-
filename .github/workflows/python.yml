@@ -1,6 +1,12 @@
 name: CI/CD Pipeline for Snowflake Deployment
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/*create_new_table.sql'
+
   workflow_dispatch: # This allows manual triggering of the workflow
     inputs:
       deploy_files:
@@ -13,14 +19,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
     # Step 1: Checkout the GitHub repository
     - name: Checkout repository
       uses: actions/checkout@v2
 
-   
-    # Step 3: Set up Snowflake credentials using GitHub Secrets
-    - name: Set up Snowflake credentials
+    # Step 2: Set up Python and install Snowflake CLI (snowsql)
+    - name: Set up Python and install Snowflake CLI (snowsql)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    # Step 3: Run schemachange and deploy to Snowflake
+    - name: Run schemachange
       env:
         SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
         SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
@@ -30,32 +40,19 @@ jobs:
         SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
         SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       run: |
-        # Write Snowflake credentials to a configuration file
-        mkdir -p ~/.snowsql
-        echo "[connections]" > ~/.snowsql/config
-        echo "accountname = $SNOWFLAKE_ACCOUNT" >> ~/.snowsql/config
-        echo "username = $SNOWFLAKE_USER" >> ~/.snowsql/config
-        echo "password = $SNOWFLAKE_PASSWORD" >> ~/.snowsql/config
-        echo "database = $SNOWFLAKE_DATABASE" >> ~/.snowsql/config
-        echo "schema = $SNOWFLAKE_SCHEMA" >> ~/.snowsql/config
-        echo "warehouse = $SNOWFLAKE_WAREHOUSE" >> ~/.snowsql/config
-        echo "role = $SNOWFLAKE_ROLE" >> ~/.snowsql/config
+        echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+        python --version
+        echo "Step 1: Installing schemachange"
+        pip install schemachange --upgrade
+        echo "Step 2: Running schemachange"
+        schemachange -f ./deploy/migrations \
+                     -a $SNOWFLAKE_ACCOUNT \
+                     -u $SNOWFLAKE_USER \
+                     -r $SNOWFLAKE_ROLE \
+                     -w $SNOWFLAKE_WAREHOUSE \
+                     -d $SNOWFLAKE_DATABASE \
+                     -c $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY \
+                     --create-change-history-table
 
-    # Step 4: Run Snowflake SQL scripts using SnowSQL
-    - name: Run Snowflake SQL scripts with SnowSQL
-      run: |
-        # Get deploy files from input and execute each SQL file
-        deploy_files='${{ github.event.inputs.deploy_files }}'
-        for file_pattern in $deploy_files; do
-          for file in ./deploy/*; do
-            if [[ $file == $file_pattern ]]; then
-              echo "Executing $file"
-              snowsql -f $file
-            fi
-          done
-        done
-
-    # Step 5: Notify deployment status
-    - name: Notify deployment status
-      if: success()
-      run: echo "Snowflake deployment successful!"
+    
+   
