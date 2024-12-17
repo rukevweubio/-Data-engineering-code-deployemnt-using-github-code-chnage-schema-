@@ -1,4 +1,8 @@
 -- Step 1: Create a File Format (CSV Example)
+
+use database swaggy_database;
+use schema snowflake_ci_cd;
+
 CREATE OR REPLACE FILE FORMAT my_csv_format
     TYPE = 'CSV'
     FIELD_OPTIONALLY_ENCLOSED_BY = '"'
