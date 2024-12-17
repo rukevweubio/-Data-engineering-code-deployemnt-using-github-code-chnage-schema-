@@ -1,24 +1,24 @@
-name: CI/CD  python Pipeline for Snowflake Deployment
+name: CI/CD Python Pipeline for Snowflake Deployment
 
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'deploy/**'
-  pull_request:
-    branches:
-      - main
-
+  workflow_dispatch: # This allows manual triggering of the workflow
+    inputs:
+      deploy_files:
+        description: 'Files to deploy (comma-separated list)'
+        required: true
+        default: 'deploy/*.sql'
+        
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
     
+    # Step 1: Checkout the GitHub repository
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    # Step 2: Set up Python and install Snowflake Connector
     - name: Set up Python and install Snowflake Connector
       uses: actions/setup-python@v2
       with:
@@ -29,6 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install snowflake-connector-python
 
+    # Step 3: Set up Snowflake credentials using GitHub Secrets
     - name: Set up Snowflake credentials
       env:
         SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -45,9 +46,10 @@ jobs:
         echo "password = $SNOWFLAKE_PASSWORD" >> ~/.snowsql/config
         echo "database = $SNOWFLAKE_DATABASE" >> ~/.snowsql/config
         echo "schema = $SNOWFLAKE_SCHEMA" >> ~/.snowsql/config
-        echo "warehouse = $SNOWFLAKE_WAREHOUSE" >> ~/.snowsql/config
+        echo "warehouse = $SNOWFLAKE_WH" >> ~/.snowsql/config
         echo "role = $SNOWFLAKE_ROLE" >> ~/.snowsql/config
 
+    # Step 4: Run Snowflake SQL scripts with Python
     - name: Run Snowflake SQL scripts with Python
       run: |
         python -c "
@@ -59,15 +61,16 @@ jobs:
             user=os.getenv('SNOWFLAKE_USER'),
             password=os.getenv('SNOWFLAKE_PASSWORD'),
             account=os.getenv('SNOWFLAKE_ACCOUNT'),
-            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+            warehouse=os.getenv('SNOWFLAKE_WH'),
             database=os.getenv('SNOWFLAKE_DATABASE'),
             schema=os.getenv('SNOWFLAKE_SCHEMA'),
             role=os.getenv('SNOWFLAKE_ROLE')
         )
         
-        # Execute each SQL file
+        # Get deploy files from input and execute each SQL file
+        deploy_files = '${{ github.event.inputs.deploy_files }}'
         for file in os.listdir('./deploy'):
-            if file.endswith('.sql'):
+            if any(file.endswith(ext) for ext in deploy_files.split(',')):
                 with open(f'./deploy/{file}', 'r') as f:
                     sql = f.read()
                     cursor = conn.cursor()
@@ -76,6 +79,7 @@ jobs:
         conn.close()
         "
 
+    # Step 5: Notify deployment status
     - name: Notify deployment status
       if: success()
       run: echo "Snowflake deployment successful!"
