@@ -5,7 +5,7 @@ on:
     branches:
       - dev 
     paths:
-      - deploy/**
+      - 'deploy/**'
   # pull_request:
   #   branches:
   #     - main
