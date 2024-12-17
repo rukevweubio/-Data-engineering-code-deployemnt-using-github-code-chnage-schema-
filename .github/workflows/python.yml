@@ -6,7 +6,7 @@ on:
       deploy_files:
         description: 'Files to deploy (comma-separated list)'
         required: true
-        default: 'deploy/*.sql'
+        default: 'deploy/*create_schema.sql'
         
 jobs:
   deploy:
