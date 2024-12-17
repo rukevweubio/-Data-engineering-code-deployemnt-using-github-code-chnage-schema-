@@ -18,13 +18,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    # Step 2: Install SnowSQL
-    - name: Install SnowSQL
-      run: |
-        curl -O https://s3.amazonaws.com/snowflake-client-releases/snowflake-snowsql-1.2.17-linux-x86_64.tar.gz
-        tar -xvzf snowflake-snowsql-1.2.17-linux-x86_64.tar.gz
-        sudo mv snowsql /usr/local/bin/
-
+   
     # Step 3: Set up Snowflake credentials using GitHub Secrets
     - name: Set up Snowflake credentials
       env:
