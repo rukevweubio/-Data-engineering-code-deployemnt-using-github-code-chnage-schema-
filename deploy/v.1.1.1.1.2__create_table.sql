@@ -30,7 +30,7 @@ CREATE OR REPLACE TABLE swaggy_database.stage_schema.ci_cd_table (
 );
 
 -- Insert 20 rows into the table
-INSERT INTO swaggy_database.stage_schema.demo_table (id, name, created_at)
+INSERT INTO swaggy_database.stage_schema.demo_table.ci_cd_table(id, name, created_at)
 VALUES
     (1, 'Alice', CURRENT_TIMESTAMP),
     (2, 'Bob', CURRENT_TIMESTAMP),
